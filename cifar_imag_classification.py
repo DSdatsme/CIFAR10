@@ -34,24 +34,24 @@ def get_data(file):
 
     
 class NearestNeighbor(object):
-      def __init__(self):
+    def __init__(self):
         pass
         
-      def train(self, X, Y):
+    def train(self, X, Y):
         """ X is (50000,3072) where each row is an example. Y is of size (50000,10) """
         # the nearest neighbor classifier simply remembers all the training data
         self.Xtrain = X
         self.Ytrain = Y
 
-      #@vectorize(["uint8(uint8)"],target = 'gup')      trying uot on cuda (not tested)
-      def predict(self, X):
+      #@vectorize(["uint8(uint8)"],target = 'gup')      trying out on cuda (not tested)
+    def predict(self, X):
         """ X is (10000,3072) where each row is an example we wish to predict label for """
         num_test = X.shape[0]
-        print(np.shape(num_test))
+        print(np.shape(num_test))    #to show the status of program
         # lets make an array Ypred which will store values of our prediction
-        Ypred = np.zeros((num_test,10))
+        Ypred = np.zeros((num_test, 10))
         print(np.shape(Ypred))
-    
+        
         # loop over all test rows
         for i in range(num_test):
           # find the nearest training image to the i'th test image
@@ -60,9 +60,29 @@ class NearestNeighbor(object):
           min_index = np.argmin(distances) # get the index with smallest distance
           Ypred[i] = self.Ytrain[min_index] # predict the label of the nearest example
           print(i)
+        
+        return Ypred
+    
+
+'''Just change the distance formula to eucledian distance,rest all is same as above function'''     
+    def predict_using_eucledian(self, X):
+        """ X is (10000,3072) where each row is an example we wish to predict label for """
+        num_test = X.shape[0]
+        print(np.shape(num_test))
+        # lets make an array Ypred which will store values of our prediction
+        Ypred = np.zeros((num_test, 10))
+        print(np.shape(Ypred))
+    
+        # loop over all test rows
+        for i in range(num_test):
+          # find the nearest training image to the i'th test image
+          # using the L1 distance (sum of absolute value differences)
+          distances = np.sqrt(np.sum(np.square(self.Xtrain - X[i,:]), axis = 1))
+          min_index = np.argmin(distances) # get the index with smallest distance
+          Ypred[i] = self.Ytrain[min_index] # predict the label of the nearest example
+          print(i)
     
         return Ypred
-
 
 
 #training data batches
@@ -71,20 +91,26 @@ class NearestNeighbor(object):
 X, Y, names = get_data('data_batch_1')          #testing first batch
 for i in range(2,6):                            #adding remaining 4 batches
     X_temp, Y_temp, names_temp = get_data('data_batch_' + str(i))
-    X = np.concatenate((X,X_temp),axis = 0)
-    Y = np.concatenate((Y,Y_temp),axis = 0)
-    names = np.concatenate((names,names_temp),axis = 0)
+    X = np.concatenate((X, X_temp), axis = 0)
+    Y = np.concatenate((Y, Y_temp), axis = 0)
+    names = np.concatenate((names, names_temp),axis = 0)
 
 #test data batch 
 #X_test = shape(10000,3072), Y_test = shape(10000,10), names_test = shape(10000,)
-X_test,Y_test,names_test = get_data('test_batch')  
+X_test, Y_test, names_test = get_data('test_batch')  
 
-#twsting out Nearest Neighbour
+
+
+#testing out Nearest Neighbour
 nn = NearestNeighbor()
-nn.train(X,Y)
-prediction = nn.predict(X_test)
+nn.train(X, Y)
 
+#usng simple NN function (diffrence between images)
+prediction = nn.predict(X_test)
 #printing classification accuracy
 print ('accuracy: %f' % ( np.mean(prediction == Y_test) ))
 
-
+#using eucledian distance
+prediction_eucledian = nn.predict_using_eucledian(X_test)
+#printing classification accuracy
+print ('accuracy: %f' % ( np.mean(prediction_eucledian == Y_test) ))
